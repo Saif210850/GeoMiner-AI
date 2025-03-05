@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GeoMiner</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #0b132b;
+            color: white;
+            padding: 20px;
+        }
+        .map-container {
+            width: 80%;
+            height: 500px;
+            background: url('https://i.imgur.com/abmeAmu.png') no-repeat center center/cover;
+            position: relative;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+        }
+        .deposit, .user-marker {
+            position: absolute;
+            padding: 5px 10px;
+            color: white;
+            font-weight: bold;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: transform 0.2s ease-in-out;
+        }
+        .deposit:hover {
+            transform: scale(1.2);
+        }
+        .user-marker {
+            background: url('https://upload.wikimedia.org/wikipedia/commons/8/88/Map_marker.svg') no-repeat center center/cover;
+            width: 30px;
+            height: 40px;
+            background-size: contain;
+        }
+        .distance-line {
+            position: absolute;
+            height: 2px;
+            background: yellow;
+        }
+        .info-panel {
+            margin-top: 20px;
+            width: 80%;
+            background: #1c2333;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+        }
+        .info-card {
+            background: #222a3a;
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.6);
+            text-align: center;
+            width: 100%;
+        }
+        .info-metrics {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+        }
+        .metric {
+            background: #2d3b50;
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+            min-width: 120px;
+        }
+        .logo {
+            font-size: 28px;
+            font-weight: bold;
+            color: #ffcc00;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="logo">GeoMiner</div>
+    <div class="map-container" id="map">
+        <div class="user-marker" id="user" style="left: 400px; top: 250px;"></div>
+    </div>
+    <div class="info-panel" id="infoPanel">
+        <div class="info-card" id="depositDetails"></div>
+        <canvas id="carbonChart" style="max-width: 300px; margin-top: 20px;"></canvas>
+    </div>
+    
+    <script>
+        const userPosition = { x: 400, y: 250 };
+        const map = document.getElementById("map");
+        const infoPanel = document.getElementById("infoPanel");
+        const depositDetails = document.getElementById("depositDetails");
+        const ctx = document.getElementById("carbonChart").getContext("2d");
+        let chart;
+
+        const deposits = [
+            {name: "Deposit A", x: 100, y: 200, gain: 500000, cost: 200000, depth: "300m", carbon: 150, profitable: true, materials: {Gold: 100, Iron: 500}},
+            {name: "Deposit B", x: 600, y: 150, gain: 200000, cost: 250000, depth: "500m", carbon: 200, profitable: false, materials: {Copper: 300, Silver: 50}},
+            {name: "Deposit C", x: 700, y: 400, gain: 800000, cost: 300000, depth: "250m", carbon: 120, profitable: true, materials: {Platinum: 30, Nickel: 700}},
+            {name: "Deposit D", x: 250, y: 300, gain: 600000, cost: 220000, depth: "280m", carbon: 140, profitable: true, materials: {Uranium: 20, Zinc: 600}},
+        ];
+
+        deposits.forEach(deposit => {
+            let div = document.createElement("div");
+            div.classList.add("deposit");
+            div.style.left = deposit.x + "px";
+            div.style.top = deposit.y + "px";
+            div.style.backgroundColor = deposit.profitable ? "green" : "red";
+            div.innerText = `$${(deposit.gain - deposit.cost).toLocaleString()}`;
+            div.onclick = () => showDetails(deposit);
+            map.appendChild(div);
+        });
+
+        function showDetails(deposit) {
+            const distance = Math.sqrt(Math.pow(deposit.x - userPosition.x, 2) + Math.pow(deposit.y - userPosition.y, 2)).toFixed(2);
+            infoPanel.style.display = "flex";
+            depositDetails.innerHTML = `
+                <h2>${deposit.name}</h2>
+                <div class="info-metrics">
+                    <div class="metric"><strong>Gain</strong><br>$${deposit.gain.toLocaleString()}</div>
+                    <div class="metric"><strong>Cost</strong><br>$${deposit.cost.toLocaleString()}</div>
+                    <div class="metric"><strong>Depth</strong><br>${deposit.depth}</div>
+                    <div class="metric"><strong>Carbon</strong><br>${deposit.carbon} tons CO₂</div>
+                    <div class="metric"><strong>Distance</strong><br>${distance}m</div>
+                </div>
+                <h3>Material Breakdown</h3>
+                <div class="info-metrics">
+                    ${Object.entries(deposit.materials).map(([material, quantity]) => `<div class="metric"><strong>${material}</strong><br>${quantity} tons</div>`).join('')}
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>
